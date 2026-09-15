@@ -28,15 +28,25 @@ export interface NewTransaction {
   currency?: string
 }
 
+async function apiError(res: Response, fallback: string): Promise<never> {
+  try {
+    const body = await res.json()
+    throw new Error(body?.error ?? fallback)
+  } catch (e) {
+    if (e instanceof SyntaxError) throw new Error(fallback)
+    throw e
+  }
+}
+
 export async function fetchTransactions(): Promise<Transaction[]> {
   const res = await fetch(`${BASE}/api/transactions`)
-  if (!res.ok) throw new Error('Failed to fetch transactions')
+  if (!res.ok) await apiError(res, 'Failed to fetch transactions')
   return res.json()
 }
 
 export async function fetchBalance(): Promise<{ balance: number; opening_balance: number }> {
   const res = await fetch(`${BASE}/api/balance`)
-  if (!res.ok) throw new Error('Failed to fetch balance')
+  if (!res.ok) await apiError(res, 'Failed to fetch balance')
   return res.json()
 }
 
@@ -46,13 +56,13 @@ export async function createTransaction(data: NewTransaction): Promise<Transacti
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  if (!res.ok) throw new Error('Failed to create transaction')
+  if (!res.ok) await apiError(res, 'Failed to create transaction')
   return res.json()
 }
 
 export async function deleteTransaction(id: number): Promise<void> {
   const res = await fetch(`${BASE}/api/transactions/${id}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error('Failed to delete transaction')
+  if (!res.ok) await apiError(res, 'Failed to delete transaction')
 }
 
 export async function updateOpeningBalance(value: number): Promise<void> {
@@ -61,5 +71,5 @@ export async function updateOpeningBalance(value: number): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ value }),
   })
-  if (!res.ok) throw new Error('Failed to update opening balance')
+  if (!res.ok) await apiError(res, 'Failed to update opening balance')
 }
