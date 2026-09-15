@@ -137,9 +137,11 @@ export default function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Add form
+  const todayISO = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
   const [form, setForm] = useState({
     merchant: '', merchant_initials: '', merchant_color: '#3b82f6',
-    reference: '', amount: '', type: 'debit' as 'debit' | 'credit',
+    reference: '', amount: '', date: todayISO,
+    type: 'debit' as 'debit' | 'credit',
     category: 'Expenses', status: 'Completed', currency: 'GBP',
   })
   const [formError, setFormError] = useState('')
@@ -172,22 +174,21 @@ export default function AdminPage() {
     try {
       const rawAmount = parseFloat(form.amount)
       const amount = form.type === 'debit' ? -Math.abs(rawAmount) : Math.abs(rawAmount)
-      const now = new Date()
+      const txDate = form.date ? new Date(form.date + 'T12:00:00') : new Date()
       await createTransaction({
         merchant: form.merchant.trim(),
         merchant_initials: form.merchant_initials.trim() || form.merchant.slice(0, 3).toUpperCase(),
         merchant_color: form.merchant_color,
         reference: form.reference.trim() || '–',
-        date_label: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' +
-          now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-        date_iso: now.toISOString(),
+        date_label: txDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        date_iso: txDate.toISOString(),
         status: form.status,
         category: form.category,
         amount,
         currency: form.currency,
       })
       await refetch()
-      setForm({ merchant: '', merchant_initials: '', merchant_color: '#3b82f6', reference: '', amount: '', type: 'debit', category: 'Expenses', status: 'Completed', currency: 'GBP' })
+      setForm({ merchant: '', merchant_initials: '', merchant_color: '#3b82f6', reference: '', amount: '', date: new Date().toISOString().slice(0, 10), type: 'debit', category: 'Expenses', status: 'Completed', currency: 'GBP' })
       setSuccessMsg('Transaction added!')
       setTimeout(() => setSuccessMsg(''), 3000)
     } catch (err) {
@@ -438,6 +439,14 @@ export default function AdminPage() {
                   placeholder="0.00" required
                   className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none border placeholder-[#5c5c72]"
                   style={{ backgroundColor: '#252535', borderColor: '#2a2a3d' }} />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium block mb-1" style={{ color: '#5c5c72' }}>Date *</label>
+                <input type="date" value={form.date} required
+                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                  className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none border"
+                  style={{ backgroundColor: '#252535', borderColor: '#2a2a3d', colorScheme: 'dark' }} />
               </div>
 
               <div>
