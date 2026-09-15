@@ -193,30 +193,7 @@ export default function CardsPage() {
             </div>
           </div>
 
-          {/* Spending limit */}
-          <div className="rounded-2xl border p-5 mt-4" style={{ backgroundColor: '#1e1e2d', borderColor: '#2a2a3d' }}>
-            <h3 className="text-base font-semibold text-white mb-3">Spending limits</h3>
-            <div className="mb-3">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-sm" style={{ color: '#8a8a9e' }}>Daily limit</span>
-                <span className="text-sm font-medium text-white">£5,000</span>
-              </div>
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#2a2a3d' }}>
-                <div className="h-full rounded-full" style={{ width: '14.8%', backgroundColor: '#3b5bdb' }} />
-              </div>
-              <p className="text-xs mt-1" style={{ color: '#5c5c72' }}>£740 used today</p>
-            </div>
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-sm" style={{ color: '#8a8a9e' }}>Monthly limit</span>
-                <span className="text-sm font-medium text-white">£50,000</span>
-              </div>
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#2a2a3d' }}>
-                <div className="h-full rounded-full" style={{ width: '14.8%', backgroundColor: '#3b5bdb' }} />
-              </div>
-              <p className="text-xs mt-1" style={{ color: '#5c5c72' }}>£7,416 used this month</p>
-            </div>
-          </div>
+
         </div>
       </div>
 

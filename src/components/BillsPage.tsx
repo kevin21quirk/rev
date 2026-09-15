@@ -14,11 +14,7 @@ interface Bill {
 
 const bills: Bill[] = [
   { id: '1', vendor: 'Fasthosts', initials: 'FH', color: '#3b82f6', amount: 11.16, dueDate: 'Oct 1, 2026', status: 'scheduled', category: 'Hosting', frequency: 'Monthly' },
-  { id: '2', vendor: 'Microsoft 365', initials: 'MS', color: '#0284c7', amount: 12.99, dueDate: 'Sep 28, 2026', status: 'due', category: 'Software', frequency: 'Monthly' },
-  { id: '3', vendor: 'Amazon Web Services', initials: 'AWS', color: '#f59e0b', amount: 92.40, dueDate: 'Sep 29, 2026', status: 'due', category: 'Cloud', frequency: 'Monthly' },
   { id: '4', vendor: 'ICO Registration', initials: 'ICO', color: '#2563eb', amount: 52.00, dueDate: 'Sep 7, 2027', status: 'paid', category: 'Legal', frequency: 'Annually' },
-  { id: '5', vendor: 'Office Rent', initials: 'OR', color: '#7c3aed', amount: 850.00, dueDate: 'Oct 1, 2026', status: 'scheduled', category: 'Office', frequency: 'Monthly' },
-  { id: '6', vendor: 'Business Insurance', initials: 'BI', color: '#059669', amount: 124.50, dueDate: 'Oct 15, 2026', status: 'scheduled', category: 'Insurance', frequency: 'Monthly' },
 ]
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
