@@ -65,6 +65,11 @@ export async function deleteTransaction(id: number): Promise<void> {
   if (!res.ok) await apiError(res, 'Failed to delete transaction')
 }
 
+export async function clearAllTransactions(): Promise<void> {
+  const res = await fetch(`${BASE}/api/transactions?all=true`, { method: 'DELETE' })
+  if (!res.ok) await apiError(res, 'Failed to clear transactions')
+}
+
 export async function updateOpeningBalance(value: number): Promise<void> {
   const res = await fetch(`${BASE}/api/settings/opening_balance`, {
     method: 'PUT',
