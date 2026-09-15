@@ -61,7 +61,7 @@ export async function createTransaction(data: NewTransaction): Promise<Transacti
 }
 
 export async function deleteTransaction(id: number): Promise<void> {
-  const res = await fetch(`${BASE}/api/transactions/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${BASE}/api/transactions?id=${id}`, { method: 'DELETE' })
   if (!res.ok) await apiError(res, 'Failed to delete transaction')
 }
 

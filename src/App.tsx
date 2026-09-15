@@ -29,10 +29,19 @@ export type NavItem =
   | 'Analytics'
   | 'Admin'
 
+function getInitialNav(): NavItem {
+  return window.location.pathname === '/admin' ? 'Admin' : 'Home'
+}
+
 export default function App() {
-  const [activeNav, setActiveNav] = useState<NavItem>('Home')
+  const [activeNav, setActiveNav] = useState<NavItem>(getInitialNav)
   const [showAllTransactions, setShowAllTransactions] = useState(false)
   const [showAddMoney, setShowAddMoney] = useState(false)
+
+  const handleNavChange = (nav: NavItem) => {
+    setActiveNav(nav)
+    window.history.pushState(null, '', nav === 'Admin' ? '/admin' : '/')
+  }
 
   const renderPage = () => {
     switch (activeNav) {
@@ -53,7 +62,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0e0e15' }}>
-      <Sidebar activeNav={activeNav} setActiveNav={setActiveNav} />
+      <Sidebar activeNav={activeNav} setActiveNav={handleNavChange} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header activeNav={activeNav} />

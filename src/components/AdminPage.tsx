@@ -82,8 +82,10 @@ export default function AdminPage() {
       setDeleteConfirm(null)
       setSuccessMsg('Transaction deleted!')
       setTimeout(() => setSuccessMsg(''), 3000)
-    } catch {
-      // ignore
+    } catch (err) {
+      setDeleteConfirm(null)
+      setFormError(err instanceof Error ? err.message : 'Failed to delete transaction')
+      setTimeout(() => setFormError(''), 5000)
     } finally {
       setDeletingId(null)
     }
