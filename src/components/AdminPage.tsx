@@ -229,9 +229,10 @@ export default function AdminPage() {
     setClearing(true)
     try {
       await clearAllTransactions()
+      await updateOpeningBalance(0) // Reset opening balance so current balance = £0
       await refetch()
       setShowClearConfirm(false)
-      setSuccessMsg('All transactions cleared!')
+      setSuccessMsg('All transactions cleared and balance reset to £0!')
       setTimeout(() => setSuccessMsg(''), 4000)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to clear transactions')
@@ -595,7 +596,7 @@ export default function AdminPage() {
           <div className="w-full max-w-sm rounded-2xl border p-6 shadow-2xl" style={{ backgroundColor: '#13131c', borderColor: '#2a2a3d' }}>
             <h3 className="text-lg font-semibold text-white mb-2">Clear all transactions?</h3>
             <p className="text-sm mb-6" style={{ color: '#8a8a9e' }}>
-              This will permanently delete all {transactions.length} transaction{transactions.length !== 1 ? 's' : ''} from the database. This cannot be undone.
+              This will permanently delete all {transactions.length} transaction{transactions.length !== 1 ? 's' : ''} and reset the opening balance to £0. This cannot be undone.
             </p>
             <div className="flex gap-3">
               <button onClick={() => setShowClearConfirm(false)} disabled={clearing}
