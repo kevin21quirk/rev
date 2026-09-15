@@ -150,10 +150,6 @@ export default function AdminPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   const [successMsg, setSuccessMsg] = useState('')
 
-  // Opening balance
-  const [editingOB, setEditingOB] = useState(false)
-  const [obValue, setObValue] = useState('')
-
   // Clear all
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearing, setClearing] = useState(false)
@@ -215,16 +211,6 @@ export default function AdminPage() {
     }
   }
 
-  const handleSaveOB = async () => {
-    const v = parseFloat(obValue)
-    if (isNaN(v)) return
-    await updateOpeningBalance(v)
-    await refetch()
-    setEditingOB(false)
-    setSuccessMsg('Opening balance updated!')
-    setTimeout(() => setSuccessMsg(''), 3000)
-  }
-
   const handleClearAll = async () => {
     setClearing(true)
     try {
@@ -282,8 +268,15 @@ export default function AdminPage() {
     }
   }
 
-  const totalIn  = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
-  const totalOut = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0)
+  const totalIn  = transactions.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
+
+  // Opening balance at start of the current calendar month
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const monthOpeningBalance = openingBalance +
+    transactions
+      .filter(t => new Date(t.date_iso) < startOfMonth)
+      .reduce((s, t) => s + Number(t.amount), 0)
 
   return (
     <div className="p-6 max-w-5xl">
@@ -346,34 +339,13 @@ export default function AdminPage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Current balance', value: `£${balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#ffffff', sub: 'Opening + transactions' },
-          { label: 'Opening balance', value: `£${openingBalance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#5b9cf6', sub: 'Base amount', editable: true },
+          { label: 'Opening balance', value: `£${monthOpeningBalance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#5b9cf6', sub: 'Start of this month' },
           { label: 'Total credits', value: `+£${totalIn.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#3ecf6e', sub: `${transactions.filter(t => t.amount > 0).length} transactions` },
           { label: 'Total debits', value: `-£${totalOut.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#ef4444', sub: `${transactions.filter(t => t.amount < 0).length} transactions` },
         ].map(card => (
           <div key={card.label} className="rounded-2xl border p-4" style={{ backgroundColor: '#1e1e2d', borderColor: '#2a2a3d' }}>
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs" style={{ color: '#5c5c72' }}>{card.label}</p>
-              {card.editable && (
-                <button onClick={() => { setEditingOB(true); setObValue(String(openingBalance)) }}
-                  className="text-xs px-2 py-0.5 rounded transition-colors"
-                  style={{ color: '#5b9cf6', backgroundColor: 'rgba(91,156,246,0.1)' }}>
-                  Edit
-                </button>
-              )}
-            </div>
-            {card.editable && editingOB ? (
-              <div className="flex gap-1 mt-1">
-                <input type="number" value={obValue} onChange={e => setObValue(e.target.value)}
-                  className="flex-1 rounded-lg px-2 py-1 text-sm text-white outline-none border min-w-0"
-                  style={{ backgroundColor: '#252535', borderColor: '#2a2a3d' }} />
-                <button onClick={handleSaveOB} className="px-2 py-1 rounded-lg text-xs font-semibold"
-                  style={{ backgroundColor: '#ffffff', color: '#0e0e15' }}>Save</button>
-                <button onClick={() => setEditingOB(false)} className="px-2 py-1 rounded-lg text-xs"
-                  style={{ backgroundColor: '#2a2a3d', color: '#8a8a9e' }}>✕</button>
-              </div>
-            ) : (
-              <p className="text-xl font-bold mt-1" style={{ color: card.color }}>{card.value}</p>
-            )}
+            <p className="text-xs mb-1" style={{ color: '#5c5c72' }}>{card.label}</p>
+            <p className="text-xl font-bold mt-1" style={{ color: card.color }}>{card.value}</p>
             <p className="text-xs mt-1" style={{ color: '#5c5c72' }}>{card.sub}</p>
           </div>
         ))}

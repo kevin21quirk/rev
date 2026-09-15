@@ -41,13 +41,16 @@ async function apiError(res: Response, fallback: string): Promise<never> {
 export async function fetchTransactions(): Promise<Transaction[]> {
   const res = await fetch(`${BASE}/api/transactions`)
   if (!res.ok) await apiError(res, 'Failed to fetch transactions')
-  return res.json()
+  const data: Transaction[] = await res.json()
+  // Neon returns NUMERIC columns as strings — coerce to JS numbers here
+  return data.map(t => ({ ...t, amount: Number(t.amount) }))
 }
 
 export async function fetchBalance(): Promise<{ balance: number; opening_balance: number }> {
   const res = await fetch(`${BASE}/api/balance`)
   if (!res.ok) await apiError(res, 'Failed to fetch balance')
-  return res.json()
+  const data = await res.json()
+  return { balance: Number(data.balance), opening_balance: Number(data.opening_balance) }
 }
 
 export async function createTransaction(data: NewTransaction): Promise<Transaction> {
