@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const sql = await getDB()
+    const sql = getDB()
     const id = parseInt(String(req.query.id), 10)
     if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' })
     const rows = await sql`DELETE FROM transactions WHERE id = ${id} RETURNING id`

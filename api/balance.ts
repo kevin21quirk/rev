@@ -4,7 +4,7 @@ import { getDB } from './db'
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   try {
-    const sql = await getDB()
+    const sql = getDB()
     const [setting] = await sql`SELECT value FROM settings WHERE key = 'opening_balance'`
     const [agg]     = await sql`SELECT COALESCE(SUM(amount), 0) AS total FROM transactions`
     const opening   = parseFloat(setting?.value ?? '0')

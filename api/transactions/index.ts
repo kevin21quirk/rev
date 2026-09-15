@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   try {
-    const sql = await getDB()
+    const sql = getDB()
 
     if (req.method === 'GET') {
       const rows = await sql`SELECT * FROM transactions ORDER BY date_iso DESC, created_at DESC`

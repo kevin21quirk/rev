@@ -1,32 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { neon } from '@neondatabase/serverless'
+import { getDB } from './db'
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-
-  const url = process.env.DATABASE_URL
-  if (!url) {
-    return res.status(500).json({
-      ok: false,
-      error: 'DATABASE_URL is NOT set in Vercel Environment Variables',
-      fix: 'Go to Vercel → your project → Settings → Environment Variables and add DATABASE_URL',
-    })
-  }
-
-  const cleanUrl = url.replace(/[&?]channel_binding=[^&]*/g, '')
-
   try {
-    const sql = neon(cleanUrl)
+    const sql = getDB()
     await sql`SELECT 1`
+    const rows = await sql`SELECT COUNT(*) AS count FROM transactions`
+    const [bal] = await sql`SELECT value FROM settings WHERE key = 'opening_balance'`
     return res.json({
       ok: true,
       db: 'connected',
-      host: new URL(cleanUrl).host,
+      transaction_count: Number(rows[0].count),
+      opening_balance: bal?.value ?? 'not set',
     })
   } catch (err) {
     return res.status(500).json({
       ok: false,
-      error: err instanceof Error ? err.message : 'DB connection failed',
+      error: err instanceof Error ? err.message : 'Unknown error',
     })
   }
 }
