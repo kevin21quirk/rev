@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getPool } from '../db'
+import { neon } from '@neondatabase/serverless'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -8,15 +8,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' })
 
+  const url = process.env.DATABASE_URL
+  if (!url) return res.status(500).json({ error: 'DATABASE_URL not set' })
+
   try {
-    const pool = getPool()
+    const sql = neon(url.replace(/[&?]channel_binding=[^&]*/g, ''))
     const id = parseInt(String(req.query.id), 10)
     if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' })
-
-    const { rows } = await pool.query(
-      'DELETE FROM transactions WHERE id = $1 RETURNING id',
-      [id]
-    )
+    const rows = await sql`DELETE FROM transactions WHERE id = ${id} RETURNING id`
     if (rows.length === 0) return res.status(404).json({ error: 'Not found' })
     return res.json({ deleted: id })
   } catch (err) {
