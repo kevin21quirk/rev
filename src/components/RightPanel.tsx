@@ -139,17 +139,15 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
           ) : (
             <button
               onClick={() => setShowPaymentLinkForm(true)}
-              className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors"
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors"
               style={{ borderColor: '#2a2a3d', color: '#ccccdd', backgroundColor: '#1e1e2d' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#252535' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#1e1e2d' }}
             >
-              <div className="flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: '#2a2a3d' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8a8a9e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14" />
-                  <path d="M12 5v14" />
-                </svg>
-              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a9e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
               Create payment link
             </button>
           )}
@@ -188,7 +186,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
               </svg>
             }
             title="Savings"
-            subtitle="Start earning"
+            subtitle="Start saving"
           />
           <AssetRow
             icon={

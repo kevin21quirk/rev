@@ -60,20 +60,19 @@ function TransactionRow({ tx }: { tx: Transaction }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <td className="px-6 py-3">
+      <td className="px-6 py-2.5">
         <div className="flex items-center gap-3">
           <MerchantAvatar tx={tx} />
           <span className="text-sm font-medium text-white truncate max-w-[160px]">{tx.merchant}</span>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm" style={{ color: '#5c5c72' }}>{tx.reference}</td>
-      <td className="px-4 py-3 text-sm" style={{ color: '#8a8a9e' }}>{tx.date_label}</td>
-      <td className="px-4 py-3 text-sm">
+      <td className="px-4 py-2.5 text-sm" style={{ color: '#5c5c72' }}>{tx.reference || '–'}</td>
+      <td className="px-4 py-2.5 text-sm" style={{ color: '#8a8a9e' }}>{tx.date_label}</td>
+      <td className="px-4 py-2.5 text-sm max-w-[140px] truncate">
         <span style={{ color: '#ccccdd' }}>{tx.status}</span>
-        {' · '}
-        <span style={{ color: '#3ecf6e' }}>{tx.category}</span>
+        {tx.category && <><span style={{ color: '#5c5c72' }}> · </span><span style={{ color: '#3ecf6e' }}>{tx.category}</span></>}
       </td>
-      <td className="px-6 py-3 text-right text-sm font-medium"
+      <td className="px-6 py-2.5 text-right text-sm font-medium"
         style={{ color: tx.amount < 0 ? '#ffffff' : '#3ecf6e' }}>
         {fmt(tx.amount, tx.currency)}
       </td>
@@ -234,11 +233,11 @@ export default function HomePage({ onSeeAll, onAddMoney }: HomePageProps) {
           <table className="w-full border-collapse">
             <thead>
               <tr style={{ borderBottom: '1px solid #1e1e2c' }}>
-                <th className="px-6 py-3 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>Transaction</th>
-                <th className="px-4 py-3 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>Reference</th>
-                <th className="px-4 py-3 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium" style={{ color: '#5c5c72' }}>Amount</th>
+                <th className="px-6 py-2.5 text-left text-xs font-medium" style={{ color: '#8a8a9e' }}>Transaction</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium" style={{ color: '#8a8a9e' }}>Reference</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium" style={{ color: '#8a8a9e' }}>Date</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium" style={{ color: '#8a8a9e' }}>Status</th>
+                <th className="px-6 py-2.5 text-right text-xs font-medium" style={{ color: '#8a8a9e' }}>Amount</th>
               </tr>
             </thead>
             <tbody>

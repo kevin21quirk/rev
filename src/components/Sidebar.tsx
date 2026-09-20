@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { NavItem } from '../App'
 
 interface SidebarProps {
@@ -117,23 +118,26 @@ const navItems: { label: NavItem; icon: JSX.Element }[] = [
 ]
 
 export default function Sidebar({ activeNav, setActiveNav }: SidebarProps) {
+  const [collapsed, setCollapsed] = useState(false)
+
   return (
     <div
-      className="flex flex-col w-[160px] shrink-0 h-full border-r"
+      className="flex flex-col shrink-0 h-full border-r transition-all duration-200"
       style={{
+        width: collapsed ? '56px' : '220px',
         backgroundColor: '#13131c',
         borderColor: '#1e1e2c',
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 py-4 mb-2">
+      <div className="flex items-center gap-2.5 px-4 py-4 mb-2 overflow-hidden">
         <div
-          className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-base select-none"
+          className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-base select-none shrink-0"
           style={{ backgroundColor: '#000000' }}
         >
           R
         </div>
-        <span className="text-white font-semibold text-base tracking-tight">Business</span>
+        {!collapsed && <span className="text-white font-semibold text-base tracking-tight whitespace-nowrap">Business</span>}
       </div>
 
       {/* Nav Items */}
@@ -144,26 +148,29 @@ export default function Sidebar({ activeNav, setActiveNav }: SidebarProps) {
             <button
               key={label}
               onClick={() => setActiveNav(label)}
+              title={collapsed ? label : undefined}
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg mb-0.5 text-left transition-colors duration-100"
               style={{
-                backgroundColor: isActive ? '#1a2c3d' : 'transparent',
+                backgroundColor: 'transparent',
                 color: isActive ? '#ffffff' : '#8a8a9e',
               }}
               onMouseEnter={e => {
                 if (!isActive) {
                   ;(e.currentTarget as HTMLElement).style.backgroundColor = '#1a1a28'
                   ;(e.currentTarget as HTMLElement).style.color = '#ccccdd'
+                } else {
+                  ;(e.currentTarget as HTMLElement).style.backgroundColor = '#1a1a28'
                 }
               }}
               onMouseLeave={e => {
+                ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
                 if (!isActive) {
-                  ;(e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
                   ;(e.currentTarget as HTMLElement).style.color = '#8a8a9e'
                 }
               }}
             >
-              <span>{icon}</span>
-              <span className="text-sm font-medium">{label}</span>
+              <span className="shrink-0">{icon}</span>
+              {!collapsed && <span className="text-sm font-medium">{label}</span>}
             </button>
           )
         })}
@@ -180,10 +187,29 @@ export default function Sidebar({ activeNav, setActiveNav }: SidebarProps) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="text-sm font-medium">Admin</span>
+            {!collapsed && <span className="text-sm font-medium">Admin</span>}
           </button>
         </div>
       )}
+
+      {/* Collapse toggle */}
+      <div className="px-2 py-3 border-t" style={{ borderColor: '#1e1e2c' }}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex items-center justify-center w-full px-3 py-2 rounded-lg transition-colors duration-100"
+          style={{ color: '#5c5c72' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#1a1a28'; (e.currentTarget as HTMLElement).style.color = '#ccccdd' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#5c5c72' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {collapsed
+              ? <><path d="m9 18 6-6-6-6" /><path d="M3 6v12" /></>
+              : <><path d="m15 18-6-6 6-6" /><path d="M21 6v12" /></>
+            }
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }

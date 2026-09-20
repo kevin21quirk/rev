@@ -59,11 +59,16 @@ export default function Header({ activeNav }: HeaderProps) {
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#1a1a28'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#8a8a9e' }}
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="7" height="7" x="3" y="3" rx="1" />
-            <rect width="7" height="7" x="14" y="3" rx="1" />
-            <rect width="7" height="7" x="3" y="14" rx="1" />
-            <rect width="7" height="7" x="14" y="14" rx="1" />
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="5" r="1.5" />
+            <circle cx="12" cy="5" r="1.5" />
+            <circle cx="19" cy="5" r="1.5" />
+            <circle cx="5" cy="12" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="19" cy="12" r="1.5" />
+            <circle cx="5" cy="19" r="1.5" />
+            <circle cx="12" cy="19" r="1.5" />
+            <circle cx="19" cy="19" r="1.5" />
           </svg>
         </button>
 
