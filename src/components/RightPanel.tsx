@@ -7,12 +7,14 @@ interface RightPanelProps {
 
 function AssetRow({
   icon,
+  iconBg,
   title,
   subtitle,
   value,
   onClick,
 }: {
   icon: JSX.Element
+  iconBg: string
   title: string
   subtitle: string
   value?: string
@@ -29,7 +31,7 @@ function AssetRow({
     >
       <div
         className="flex items-center justify-center w-8 h-8 rounded-full shrink-0"
-        style={{ backgroundColor: '#1e1e2d' }}
+        style={{ backgroundColor: iconBg }}
       >
         {icon}
       </div>
@@ -153,9 +155,6 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
           )}
         </div>
 
-        {/* Divider */}
-        <div className="mb-4" style={{ height: '1px', backgroundColor: '#1e1e2c' }} />
-
         {/* Total assets */}
         <div className="mb-4">
           <p className="text-xs font-medium mb-1" style={{ color: '#5c5c72' }}>Total assets</p>
@@ -167,6 +166,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
         {/* Asset rows */}
         <div className="space-y-0.5 mb-5">
           <AssetRow
+            iconBg="rgba(62,207,110,0.15)"
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ecf6e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -179,6 +179,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
             value={`£${balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           />
           <AssetRow
+            iconBg="rgba(91,156,246,0.15)"
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b9cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
@@ -189,6 +190,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
             subtitle="Start saving"
           />
           <AssetRow
+            iconBg="rgba(167,139,250,0.15)"
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
@@ -200,6 +202,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
             subtitle="Accept payments"
           />
           <AssetRow
+            iconBg="rgba(245,158,11,0.15)"
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.074 4.492m-5.908-5.488-.074-4.49m0 0 5.908 1.042M5.785 13.559C.86 12.69 2.076 5.798 7 6.667m-1.215 6.892L11.018 2.064" />
@@ -209,6 +212,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
             subtitle="Trade crypto"
           />
           <AssetRow
+            iconBg="rgba(249,115,22,0.15)"
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="20" height="14" x="2" y="5" rx="2" />
@@ -219,6 +223,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
             subtitle="Start hedging"
           />
           <AssetRow
+            iconBg="rgba(52,211,153,0.15)"
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -229,9 +234,6 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
             subtitle="Link external account"
           />
         </div>
-
-        {/* Divider */}
-        <div className="mb-4" style={{ height: '1px', backgroundColor: '#1e1e2c' }} />
 
         {/* Trending rewards */}
         <div>
