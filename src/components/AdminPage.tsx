@@ -155,8 +155,7 @@ export default function AdminPage() {
   const [clearing, setClearing] = useState(false)
 
   // CSV import
-  interface ImportRow { tx: NewTransaction; isDuplicate: boolean }
-  const [importPreview, setImportPreview] = useState<ImportRow[] | null>(null)
+  const [importPreview, setImportPreview] = useState<NewTransaction[] | null>(null)
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState(0)
 
@@ -236,16 +235,7 @@ export default function AdminPage() {
     reader.onload = ev => {
       const text = ev.target?.result as string
       const parsed = parseRevolutCSV(text)
-
-      // Build a set of existing (date-day + amount) keys for duplicate detection
-      const existingKeys = new Set(
-        transactions.map(t => `${String(t.date_iso).slice(0, 10)}:${Number(t.amount).toFixed(2)}`)
-      )
-      const rows: ImportRow[] = parsed.map(tx => ({
-        tx,
-        isDuplicate: existingKeys.has(`${(tx.date_iso ?? '').slice(0, 10)}:${Number(tx.amount).toFixed(2)}`),
-      }))
-      setImportPreview(rows)
+      setImportPreview(parsed)
     }
     reader.readAsText(file)
     // Reset so same file can be re-selected
@@ -253,28 +243,20 @@ export default function AdminPage() {
   }
 
   const handleImport = async () => {
-    if (!importPreview) return
-    const newRows = importPreview.filter(r => !r.isDuplicate)
-    if (newRows.length === 0) {
-      setImportPreview(null)
-      setSuccessMsg('No new transactions to import (all already exist)')
-      setTimeout(() => setSuccessMsg(''), 5000)
-      return
-    }
+    if (!importPreview || importPreview.length === 0) return
     setImporting(true)
     setImportProgress(0)
     const BATCH = 5
     let done = 0
     try {
-      for (let i = 0; i < newRows.length; i += BATCH) {
-        const batch = newRows.slice(i, i + BATCH)
-        await Promise.all(batch.map(r => createTransaction(r.tx)))
+      for (let i = 0; i < importPreview.length; i += BATCH) {
+        const batch = importPreview.slice(i, i + BATCH)
+        await Promise.all(batch.map(tx => createTransaction(tx)))
         done += batch.length
-        setImportProgress(Math.round((done / newRows.length) * 100))
+        setImportProgress(Math.round((done / importPreview.length) * 100))
       }
       await refetch()
-      const skipped = importPreview.length - newRows.length
-      setSuccessMsg(`Imported ${done} transaction${done !== 1 ? 's' : ''}${skipped > 0 ? ` (${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped)` : ''}!`)
+      setSuccessMsg(`Imported ${done} transaction${done !== 1 ? 's' : ''}!`)
       setTimeout(() => setSuccessMsg(''), 5000)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Import failed')
@@ -605,68 +587,59 @@ export default function AdminPage() {
       )}
 
       {/* ── CSV import preview modal ── */}
-      {importPreview && (() => {
-        const newCount  = importPreview.filter(r => !r.isDuplicate).length
-        const dupCount  = importPreview.filter(r =>  r.isDuplicate).length
-        return (
+      {importPreview !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
           <div className="w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden" style={{ backgroundColor: '#13131c', borderColor: '#2a2a3d' }}>
             <div className="px-6 py-5 border-b" style={{ borderColor: '#2a2a3d' }}>
               <h3 className="text-lg font-semibold text-white">Import CSV</h3>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-sm font-medium" style={{ color: '#3ecf6e' }}>
-                  {newCount} new
-                </span>
-                {dupCount > 0 && (
-                  <span className="text-sm" style={{ color: '#8a8a9e' }}>
-                    · {dupCount} duplicate{dupCount !== 1 ? 's' : ''} (will skip)
-                  </span>
-                )}
-              </div>
+              <p className="text-sm mt-1" style={{ color: '#8a8a9e' }}>
+                {importPreview.length > 0
+                  ? `${importPreview.length} transaction${importPreview.length !== 1 ? 's' : ''} found — review below`
+                  : 'No transactions found — check the file is a Revolut Business CSV export'}
+              </p>
             </div>
 
             {/* Preview table */}
-            <div className="overflow-y-auto" style={{ maxHeight: '320px' }}>
-              <table className="w-full">
-                <thead>
-                  <tr style={{ backgroundColor: '#1a1a28', position: 'sticky', top: 0 }}>
-                    {['Merchant', 'Date', 'Category', 'Amount', ''].map(h => (
-                      <th key={h} className="px-4 py-2 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {importPreview.slice(0, 50).map(({ tx, isDuplicate }, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #1e1e2c', opacity: isDuplicate ? 0.4 : 1 }}>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                            style={{ backgroundColor: tx.merchant_color }}>
-                            {(tx.merchant_initials || tx.merchant.slice(0, 1)).slice(0, 2)}
+            {importPreview.length > 0 && (
+              <div className="overflow-y-auto" style={{ maxHeight: '320px' }}>
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: '#1a1a28', position: 'sticky', top: 0 }}>
+                      {['Merchant', 'Date', 'Category', 'Amount'].map(h => (
+                        <th key={h} className="px-4 py-2 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPreview.slice(0, 50).map((tx, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #1e1e2c' }}>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                              style={{ backgroundColor: tx.merchant_color }}>
+                              {(tx.merchant_initials || tx.merchant.slice(0, 1)).slice(0, 2)}
+                            </div>
+                            <span className="text-xs text-white truncate max-w-[120px]">{tx.merchant}</span>
                           </div>
-                          <span className="text-xs text-white truncate max-w-[120px]">{tx.merchant}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 text-xs" style={{ color: '#8a8a9e' }}>{tx.date_label?.split(',')[0]}</td>
-                      <td className="px-4 py-2 text-xs" style={{ color: '#8a8a9e' }}>{tx.category}</td>
-                      <td className="px-4 py-2 text-xs font-medium" style={{ color: (tx.amount ?? 0) < 0 ? '#ffffff' : '#3ecf6e' }}>
-                        {fmt(tx.amount ?? 0)}
-                      </td>
-                      <td className="px-4 py-2 text-xs" style={{ color: '#5c5c72' }}>
-                        {isDuplicate ? 'skip' : ''}
-                      </td>
-                    </tr>
-                  ))}
-                  {importPreview.length > 50 && (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-2 text-xs text-center" style={{ color: '#5c5c72' }}>
-                        …and {importPreview.length - 50} more
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        </td>
+                        <td className="px-4 py-2 text-xs" style={{ color: '#8a8a9e' }}>{tx.date_label?.split(',')[0]}</td>
+                        <td className="px-4 py-2 text-xs" style={{ color: '#8a8a9e' }}>{tx.category}</td>
+                        <td className="px-4 py-2 text-xs font-medium" style={{ color: (tx.amount ?? 0) < 0 ? '#ffffff' : '#3ecf6e' }}>
+                          {fmt(tx.amount ?? 0)}
+                        </td>
+                      </tr>
+                    ))}
+                    {importPreview.length > 50 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-2 text-xs text-center" style={{ color: '#5c5c72' }}>
+                          …and {importPreview.length - 50} more
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Progress bar (while importing) */}
             {importing && (
@@ -687,24 +660,19 @@ export default function AdminPage() {
                 style={{ borderColor: '#2a2a3d', color: '#ccccdd' }}>
                 Cancel
               </button>
-              <button onClick={handleImport} disabled={importing || newCount === 0}
+              <button onClick={handleImport} disabled={importing || importPreview.length === 0}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
                 style={{
-                  backgroundColor: importing || newCount === 0 ? '#2a2a3d' : '#ffffff',
-                  color: importing || newCount === 0 ? '#5c5c72' : '#0e0e15',
-                  cursor: importing || newCount === 0 ? 'not-allowed' : 'pointer',
+                  backgroundColor: importing || importPreview.length === 0 ? '#2a2a3d' : '#ffffff',
+                  color: importing || importPreview.length === 0 ? '#5c5c72' : '#0e0e15',
+                  cursor: importing || importPreview.length === 0 ? 'not-allowed' : 'pointer',
                 }}>
-                {importing
-                  ? `Importing… ${importProgress}%`
-                  : newCount === 0
-                    ? 'All duplicates — nothing to import'
-                    : `Import ${newCount} new transaction${newCount !== 1 ? 's' : ''}`}
+                {importing ? `Importing… ${importProgress}%` : `Import ${importPreview.length} transaction${importPreview.length !== 1 ? 's' : ''}`}
               </button>
             </div>
           </div>
         </div>
-        )
-      })()}
+      )}
     </div>
   )
 }
