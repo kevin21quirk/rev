@@ -110,7 +110,14 @@ export default function HomePage({ onSeeAll, onAddMoney }: HomePageProps) {
               </button>
             </div>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-sm">🇬🇧</span>
+              {/* Union Jack flag */}
+              <svg viewBox="0 0 60 30" width="22" height="14" className="shrink-0 rounded-sm overflow-hidden">
+                <rect width="60" height="30" fill="#012169"/>
+                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
+                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
+                <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10"/>
+                <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
+              </svg>
               <span className="text-sm" style={{ color: '#8a8a9e' }}>Main · GBP · Default</span>
               <button style={{ color: '#5c5c72' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

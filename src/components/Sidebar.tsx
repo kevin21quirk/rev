@@ -131,12 +131,11 @@ export default function Sidebar({ activeNav, setActiveNav }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 mb-2 overflow-hidden">
-        <div
-          className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-base select-none shrink-0"
-          style={{ backgroundColor: '#000000' }}
-        >
-          R
-        </div>
+        <img
+          src="/logo.png"
+          alt="Logo"
+          className="w-8 h-8 rounded shrink-0 object-contain"
+        />
         {!collapsed && <span className="text-white font-semibold text-base tracking-tight whitespace-nowrap">Business</span>}
       </div>
 

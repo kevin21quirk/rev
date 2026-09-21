@@ -23,8 +23,8 @@ function AssetRow({
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      className="flex items-center gap-3 py-2.5 px-1 rounded-lg cursor-pointer transition-colors"
-      style={{ backgroundColor: hovered ? '#1a1a28' : 'transparent' }}
+      className="flex items-center gap-3 py-2.5 px-1 cursor-pointer transition-colors"
+      style={{ backgroundColor: hovered ? '#1a1a28' : 'transparent', borderBottom: '1px solid #252538' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
@@ -80,7 +80,7 @@ export default function RightPanel({ onAddMoney }: RightPanelProps) {
   return (
     <div
       className="w-[280px] shrink-0 h-full overflow-y-auto border-l flex flex-col"
-      style={{ backgroundColor: '#13131c', borderColor: '#1e1e2c' }}
+      style={{ backgroundColor: '#191924', borderColor: '#252538' }}
     >
       <div className="flex-1 px-4 py-4">
         {/* Payment links */}

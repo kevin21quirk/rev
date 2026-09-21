@@ -67,7 +67,7 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header activeNav={activeNav} />
         <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: '#0e0e15' }}>
-          <div className="flex-1 overflow-y-auto m-3 rounded-xl" style={{ backgroundColor: '#13131c', border: '1px solid #1e1e2c' }}>
+          <div className="flex-1 overflow-y-auto m-3 rounded-xl" style={{ backgroundColor: '#1a1a24', border: '1px solid #252538' }}>
             {renderPage()}
           </div>
           {activeNav === 'Home' && (
