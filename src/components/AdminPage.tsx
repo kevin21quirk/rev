@@ -155,7 +155,8 @@ export default function AdminPage() {
   const [clearing, setClearing] = useState(false)
 
   // CSV import
-  const [importPreview, setImportPreview] = useState<NewTransaction[] | null>(null)
+  interface ImportRow { tx: NewTransaction; isDuplicate: boolean }
+  const [importPreview, setImportPreview] = useState<ImportRow[] | null>(null)
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState(0)
 
@@ -235,7 +236,16 @@ export default function AdminPage() {
     reader.onload = ev => {
       const text = ev.target?.result as string
       const parsed = parseRevolutCSV(text)
-      setImportPreview(parsed)
+
+      // Build a set of existing (date-day + amount) keys for duplicate detection
+      const existingKeys = new Set(
+        transactions.map(t => `${String(t.date_iso).slice(0, 10)}:${Number(t.amount).toFixed(2)}`)
+      )
+      const rows: ImportRow[] = parsed.map(tx => ({
+        tx,
+        isDuplicate: existingKeys.has(`${(tx.date_iso ?? '').slice(0, 10)}:${Number(tx.amount).toFixed(2)}`),
+      }))
+      setImportPreview(rows)
     }
     reader.readAsText(file)
     // Reset so same file can be re-selected
@@ -244,19 +254,27 @@ export default function AdminPage() {
 
   const handleImport = async () => {
     if (!importPreview) return
+    const newRows = importPreview.filter(r => !r.isDuplicate)
+    if (newRows.length === 0) {
+      setImportPreview(null)
+      setSuccessMsg('No new transactions to import (all already exist)')
+      setTimeout(() => setSuccessMsg(''), 5000)
+      return
+    }
     setImporting(true)
     setImportProgress(0)
     const BATCH = 5
     let done = 0
     try {
-      for (let i = 0; i < importPreview.length; i += BATCH) {
-        const batch = importPreview.slice(i, i + BATCH)
-        await Promise.all(batch.map(tx => createTransaction(tx)))
+      for (let i = 0; i < newRows.length; i += BATCH) {
+        const batch = newRows.slice(i, i + BATCH)
+        await Promise.all(batch.map(r => createTransaction(r.tx)))
         done += batch.length
-        setImportProgress(Math.round((done / importPreview.length) * 100))
+        setImportProgress(Math.round((done / newRows.length) * 100))
       }
       await refetch()
-      setSuccessMsg(`Imported ${done} transactions!`)
+      const skipped = importPreview.length - newRows.length
+      setSuccessMsg(`Imported ${done} transaction${done !== 1 ? 's' : ''}${skipped > 0 ? ` (${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped)` : ''}!`)
       setTimeout(() => setSuccessMsg(''), 5000)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Import failed')
@@ -587,14 +605,24 @@ export default function AdminPage() {
       )}
 
       {/* ── CSV import preview modal ── */}
-      {importPreview && (
+      {importPreview && (() => {
+        const newCount  = importPreview.filter(r => !r.isDuplicate).length
+        const dupCount  = importPreview.filter(r =>  r.isDuplicate).length
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
           <div className="w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden" style={{ backgroundColor: '#13131c', borderColor: '#2a2a3d' }}>
             <div className="px-6 py-5 border-b" style={{ borderColor: '#2a2a3d' }}>
               <h3 className="text-lg font-semibold text-white">Import CSV</h3>
-              <p className="text-sm mt-1" style={{ color: '#8a8a9e' }}>
-                {importPreview.length} transactions found — preview below
-              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm font-medium" style={{ color: '#3ecf6e' }}>
+                  {newCount} new
+                </span>
+                {dupCount > 0 && (
+                  <span className="text-sm" style={{ color: '#8a8a9e' }}>
+                    · {dupCount} duplicate{dupCount !== 1 ? 's' : ''} (will skip)
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Preview table */}
@@ -602,14 +630,14 @@ export default function AdminPage() {
               <table className="w-full">
                 <thead>
                   <tr style={{ backgroundColor: '#1a1a28', position: 'sticky', top: 0 }}>
-                    {['Merchant', 'Date', 'Category', 'Amount'].map(h => (
+                    {['Merchant', 'Date', 'Category', 'Amount', ''].map(h => (
                       <th key={h} className="px-4 py-2 text-left text-xs font-medium" style={{ color: '#5c5c72' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {importPreview.slice(0, 50).map((tx, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #1e1e2c' }}>
+                  {importPreview.slice(0, 50).map(({ tx, isDuplicate }, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #1e1e2c', opacity: isDuplicate ? 0.4 : 1 }}>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
@@ -624,11 +652,14 @@ export default function AdminPage() {
                       <td className="px-4 py-2 text-xs font-medium" style={{ color: (tx.amount ?? 0) < 0 ? '#ffffff' : '#3ecf6e' }}>
                         {fmt(tx.amount ?? 0)}
                       </td>
+                      <td className="px-4 py-2 text-xs" style={{ color: '#5c5c72' }}>
+                        {isDuplicate ? 'skip' : ''}
+                      </td>
                     </tr>
                   ))}
                   {importPreview.length > 50 && (
                     <tr>
-                      <td colSpan={4} className="px-4 py-2 text-xs text-center" style={{ color: '#5c5c72' }}>
+                      <td colSpan={5} className="px-4 py-2 text-xs text-center" style={{ color: '#5c5c72' }}>
                         …and {importPreview.length - 50} more
                       </td>
                     </tr>
@@ -656,15 +687,24 @@ export default function AdminPage() {
                 style={{ borderColor: '#2a2a3d', color: '#ccccdd' }}>
                 Cancel
               </button>
-              <button onClick={handleImport} disabled={importing}
+              <button onClick={handleImport} disabled={importing || newCount === 0}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
-                style={{ backgroundColor: importing ? '#2a2a3d' : '#ffffff', color: importing ? '#5c5c72' : '#0e0e15', cursor: importing ? 'not-allowed' : 'pointer' }}>
-                {importing ? `Importing… ${importProgress}%` : `Import ${importPreview.length} transactions`}
+                style={{
+                  backgroundColor: importing || newCount === 0 ? '#2a2a3d' : '#ffffff',
+                  color: importing || newCount === 0 ? '#5c5c72' : '#0e0e15',
+                  cursor: importing || newCount === 0 ? 'not-allowed' : 'pointer',
+                }}>
+                {importing
+                  ? `Importing… ${importProgress}%`
+                  : newCount === 0
+                    ? 'All duplicates — nothing to import'
+                    : `Import ${newCount} new transaction${newCount !== 1 ? 's' : ''}`}
               </button>
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
