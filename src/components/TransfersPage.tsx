@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react'
+import { useTransactions } from '../context/TransactionsContext'
+import { createTransaction } from '../lib/api'
 
 interface Recipient {
   id: string
@@ -87,6 +89,7 @@ type Step = 'recipients' | 'new-transfer' | 'send-detail' | 'review' | 'success'
 type RecipientsTab = 'Recipients' | 'Pending' | 'Scheduled'
 
 export default function TransfersPage() {
+  const { balance, refetch } = useTransactions()
   const [step, setStep] = useState<Step>('recipients')
   const [activeTab, setActiveTab] = useState<RecipientsTab>('Recipients')
   const [searchQuery, setSearchQuery] = useState('')
@@ -96,6 +99,8 @@ export default function TransfersPage() {
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
   const [billFile, setBillFile] = useState<File | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const attachInputRef = useRef<HTMLInputElement>(null)
   const billInputRef = useRef<HTMLInputElement>(null)
 
@@ -105,23 +110,52 @@ export default function TransfersPage() {
     setReference(r.defaultReference || '')
     setAttachmentFile(null)
     setBillFile(null)
+    setSubmitError(null)
     setStep('send-detail')
   }
 
   const handleReview = () => {
+    setSubmitError(null)
     setStep('review')
   }
 
-  const handleConfirm = () => {
-    setStep('success')
-    setTimeout(() => {
-      setStep('recipients')
-      setSelectedRecipient(null)
-      setAmount('')
-      setReference('')
-      setAttachmentFile(null)
-      setBillFile(null)
-    }, 3000)
+  const handleConfirm = async () => {
+    if (!selectedRecipient) return
+    const parsedAmount = parseFloat(amount) || 0
+    if (parsedAmount <= 0) return
+
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const now = new Date()
+      const dateLabel = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ',')
+      await createTransaction({
+        merchant: `To ${selectedRecipient.name}`,
+        merchant_initials: selectedRecipient.initials,
+        merchant_color: selectedRecipient.color,
+        reference: reference || '–',
+        date_label: dateLabel,
+        date_iso: now.toISOString(),
+        status: 'Completed',
+        category: 'Expenses',
+        amount: -parsedAmount,
+        currency: selectedRecipient.isRevolut ? 'GBP' : selectedRecipient.currency,
+      })
+      await refetch()
+      setStep('success')
+      setTimeout(() => {
+        setStep('recipients')
+        setSelectedRecipient(null)
+        setAmount('')
+        setReference('')
+        setAttachmentFile(null)
+        setBillFile(null)
+      }, 3000)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to send transfer')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const filteredRecipients = recipientsSorted.filter(r =>
@@ -459,7 +493,7 @@ export default function TransfersPage() {
             style={{ backgroundColor: '#252535', borderColor: '#3a3a50' }}
           >
             <span className="text-base">🇬🇧</span>
-            <span className="text-sm font-medium text-white">Main · £5,252.66</span>
+            <span className="text-sm font-medium text-white">Main · £{balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a9e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m6 9 6 6 6-6" />
             </svg>
@@ -549,8 +583,13 @@ export default function TransfersPage() {
           </button>
           <button
             onClick={handleReview}
+            disabled={!amount || parseFloat(amount) <= 0}
             className="flex-1 max-w-xs py-3 rounded-full text-sm font-semibold transition-colors"
-            style={{ backgroundColor: '#ffffff', color: '#0e0e15' }}
+            style={{
+              backgroundColor: amount && parseFloat(amount) > 0 ? '#ffffff' : '#3a3a50',
+              color: amount && parseFloat(amount) > 0 ? '#0e0e15' : '#5c5c72',
+              cursor: amount && parseFloat(amount) > 0 ? 'pointer' : 'not-allowed',
+            }}
           >
             Review
           </button>
@@ -610,20 +649,26 @@ export default function TransfersPage() {
             ))}
           </div>
 
+          {submitError && (
+            <p className="text-sm mb-3 text-center" style={{ color: '#ef4444' }}>{submitError}</p>
+          )}
+
           <div className="flex gap-3">
             <button
               onClick={() => setStep('send-detail')}
+              disabled={submitting}
               className="flex-1 py-3 rounded-full text-sm font-medium border transition-colors"
-              style={{ borderColor: '#2a2a3d', color: '#ccccdd', backgroundColor: '#252535' }}
+              style={{ borderColor: '#2a2a3d', color: '#ccccdd', backgroundColor: '#252535', opacity: submitting ? 0.5 : 1 }}
             >
               Back
             </button>
             <button
               onClick={handleConfirm}
+              disabled={submitting}
               className="flex-1 py-3 rounded-full text-sm font-semibold transition-colors"
-              style={{ backgroundColor: '#ffffff', color: '#0e0e15' }}
+              style={{ backgroundColor: '#ffffff', color: '#0e0e15', opacity: submitting ? 0.7 : 1 }}
             >
-              Send now
+              {submitting ? 'Sending…' : 'Send now'}
             </button>
           </div>
         </div>
