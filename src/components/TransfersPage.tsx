@@ -88,9 +88,23 @@ const recipientsSorted = [...recipients].sort((a, b) => a.name.localeCompare(b.n
 type Step = 'recipients' | 'new-transfer' | 'send-detail' | 'review' | 'success'
 type RecipientsTab = 'Recipients' | 'Pending' | 'Scheduled'
 
+// Inline Union Jack SVG (consistent with HomePage)
+function UKFlag() {
+  return (
+    <svg viewBox="0 0 60 30" width="22" height="14" className="shrink-0 rounded-sm overflow-hidden">
+      <rect width="60" height="30" fill="#012169"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
+      <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10"/>
+      <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
+    </svg>
+  )
+}
+
 export default function TransfersPage() {
   const { balance, refetch } = useTransactions()
   const [step, setStep] = useState<Step>('recipients')
+  const [prevStep, setPrevStep] = useState<Step>('recipients')
   const [activeTab, setActiveTab] = useState<RecipientsTab>('Recipients')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null)
@@ -104,6 +118,8 @@ export default function TransfersPage() {
   const attachInputRef = useRef<HTMLInputElement>(null)
   const billInputRef = useRef<HTMLInputElement>(null)
 
+  const goTo = (next: Step) => { setPrevStep(step); setStep(next) }
+
   const handleSelectRecipient = (r: Recipient) => {
     setSelectedRecipient(r)
     setAmount('')
@@ -111,18 +127,18 @@ export default function TransfersPage() {
     setAttachmentFile(null)
     setBillFile(null)
     setSubmitError(null)
-    setStep('send-detail')
+    goTo('send-detail')
   }
 
   const handleReview = () => {
     setSubmitError(null)
-    setStep('review')
+    goTo('review')
   }
 
   const handleConfirm = async () => {
     if (!selectedRecipient) return
     const parsedAmount = parseFloat(amount) || 0
-    if (parsedAmount <= 0) return
+    if (parsedAmount <= 0 || parsedAmount > balance) return
 
     setSubmitting(true)
     setSubmitError(null)
@@ -137,7 +153,7 @@ export default function TransfersPage() {
         date_label: dateLabel,
         date_iso: now.toISOString(),
         status: 'Completed',
-        category: 'Expenses',
+        category: 'Transfer',
         amount: -parsedAmount,
         currency: selectedRecipient.isRevolut ? 'GBP' : selectedRecipient.currency,
       })
@@ -145,6 +161,7 @@ export default function TransfersPage() {
       setStep('success')
       setTimeout(() => {
         setStep('recipients')
+        setPrevStep('recipients')
         setSelectedRecipient(null)
         setAmount('')
         setReference('')
@@ -213,7 +230,7 @@ export default function TransfersPage() {
 
               {/* + New */}
               <button
-                onClick={() => { setSearchQuery(''); setStep('new-transfer') }}
+                onClick={() => { setSearchQuery(''); goTo('new-transfer') }}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
                 style={{ backgroundColor: '#ffffff', color: '#0e0e15' }}
               >
@@ -286,7 +303,7 @@ export default function TransfersPage() {
         {/* Back + title */}
         <div className="w-full max-w-lg">
           <button
-            onClick={() => setStep('recipients')}
+            onClick={() => goTo('recipients')}
             className="flex items-center mb-5 transition-colors"
             style={{ color: '#8a8a9e' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ffffff' }}
@@ -437,6 +454,8 @@ export default function TransfersPage() {
   if (step === 'send-detail' && selectedRecipient) {
     const r = selectedRecipient
     const parsedAmount = parseFloat(amount) || 0
+    const insufficientFunds = parsedAmount > 0 && parsedAmount > balance
+    const canReview = parsedAmount > 0 && !insufficientFunds
 
     return (
       <div className="flex flex-col min-h-full">
@@ -444,7 +463,7 @@ export default function TransfersPage() {
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: '#252538' }}>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setStep('new-transfer')}
+              onClick={() => goTo(prevStep)}
               className="transition-colors"
               style={{ color: '#8a8a9e' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ffffff' }}
@@ -485,14 +504,16 @@ export default function TransfersPage() {
               style={{ width: Math.max(60, (amount || '0').length * 32) + 'px' }}
             />
           </div>
-          <p className="text-sm mb-3" style={{ color: '#8a8a9e' }}>No fees</p>
+          <p className="text-sm mb-1" style={{ color: insufficientFunds ? '#ef4444' : '#8a8a9e' }}>
+            {insufficientFunds ? `Insufficient funds — balance is £${balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'No fees'}
+          </p>
 
           {/* Account selector */}
           <button
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors"
-            style={{ backgroundColor: '#252535', borderColor: '#3a3a50' }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors mt-2"
+            style={{ backgroundColor: '#252535', borderColor: insufficientFunds ? '#ef4444' : '#3a3a50' }}
           >
-            <span className="text-base">🇬🇧</span>
+            <UKFlag />
             <span className="text-sm font-medium text-white">Main · £{balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a9e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m6 9 6 6 6-6" />
@@ -583,12 +604,12 @@ export default function TransfersPage() {
           </button>
           <button
             onClick={handleReview}
-            disabled={!amount || parseFloat(amount) <= 0}
+            disabled={!canReview}
             className="flex-1 max-w-xs py-3 rounded-full text-sm font-semibold transition-colors"
             style={{
-              backgroundColor: amount && parseFloat(amount) > 0 ? '#ffffff' : '#3a3a50',
-              color: amount && parseFloat(amount) > 0 ? '#0e0e15' : '#5c5c72',
-              cursor: amount && parseFloat(amount) > 0 ? 'pointer' : 'not-allowed',
+              backgroundColor: canReview ? '#ffffff' : '#3a3a50',
+              color: canReview ? '#0e0e15' : '#5c5c72',
+              cursor: canReview ? 'pointer' : 'not-allowed',
             }}
           >
             Review
@@ -602,12 +623,13 @@ export default function TransfersPage() {
   if (step === 'review' && selectedRecipient) {
     const r = selectedRecipient
     const parsedAmount = parseFloat(amount) || 0
+    const newBalance = balance - parsedAmount
 
     return (
       <div className="flex flex-col items-center min-h-full py-8 px-4">
         <div className="w-full max-w-lg">
           <button
-            onClick={() => setStep('send-detail')}
+            onClick={() => goTo('send-detail')}
             className="flex items-center mb-5 transition-colors"
             style={{ color: '#8a8a9e' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ffffff' }}
@@ -634,9 +656,10 @@ export default function TransfersPage() {
               { label: 'From', value: 'Main · GBP' },
               { label: 'To', value: r.name },
               { label: 'Account', value: r.isRevolut ? r.revtag! : `${r.accountNumber} · ${r.sortCode}` },
-              { label: 'Amount', value: `£${parsedAmount > 0 ? parsedAmount.toFixed(2) : '0.00'}` },
+              { label: 'Amount', value: `−£${parsedAmount > 0 ? parsedAmount.toFixed(2) : '0.00'}` },
               { label: 'Fee', value: 'Free' },
               { label: 'Reference', value: reference || 'No reference' },
+              { label: 'New balance', value: `£${newBalance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
             ].map((item, i) => (
               <div
                 key={item.label}
@@ -644,7 +667,7 @@ export default function TransfersPage() {
                 style={{ borderTop: i > 0 ? '1px solid #252538' : 'none' }}
               >
                 <span className="text-sm" style={{ color: '#8a8a9e' }}>{item.label}</span>
-                <span className="text-sm font-medium text-white">{item.value}</span>
+                <span className="text-sm font-medium" style={{ color: item.label === 'New balance' ? '#3ecf6e' : '#ffffff' }}>{item.value}</span>
               </div>
             ))}
           </div>
@@ -655,7 +678,7 @@ export default function TransfersPage() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setStep('send-detail')}
+              onClick={() => goTo('send-detail')}
               disabled={submitting}
               className="flex-1 py-3 rounded-full text-sm font-medium border transition-colors"
               style={{ borderColor: '#2a2a3d', color: '#ccccdd', backgroundColor: '#252535', opacity: submitting ? 0.5 : 1 }}
